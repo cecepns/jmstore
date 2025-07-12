@@ -21,7 +21,7 @@ export default function UserDashboard() {
     return (
       <div className="min-h-screen bg-gray-50 flex flex-col">
         <main className="flex-1 overflow-x-hidden overflow-y-auto bg-gray-50">
-          <div className="container mx-auto px-6 py-8">
+          <div className="md:max-w-3xl mx-auto px-6 py-8">
             <UserOverview />
           </div>
         </main>

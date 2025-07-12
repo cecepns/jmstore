@@ -104,6 +104,21 @@ export default function PackageManagement() {
 
   const handleEdit = (pkg) => {
     setEditingPackage(pkg);
+    
+    // Handle available_for parsing
+    let availableForArray = ['user', 'seller', 'reseller']; // default
+    if (pkg.available_for) {
+      if (typeof pkg.available_for === 'string') {
+        try {
+          availableForArray = JSON.parse(pkg.available_for);
+        } catch (error) {
+          console.error('Error parsing available_for:', error);
+        }
+      } else if (Array.isArray(pkg.available_for)) {
+        availableForArray = pkg.available_for;
+      }
+    }
+    
     setFormData({
       name: pkg.name,
       description: pkg.description,
@@ -118,7 +133,7 @@ export default function PackageManagement() {
       package_api_id: pkg.package_api_id || '',
       status: pkg.status,
       stock: pkg.stock,
-      available_for: pkg.available_for
+      available_for: availableForArray
     });
     setShowAddForm(true);
   };
@@ -165,6 +180,43 @@ export default function PackageManagement() {
       default:
         return 'bg-gray-100 text-gray-800';
     }
+  };
+
+  const formatAvailableFor = (availableFor) => {
+    if (!availableFor) return '-';
+    
+    // Handle case where availableFor is a JSON string
+    let availableForArray;
+    if (typeof availableFor === 'string') {
+      try {
+        const parsed = JSON.parse(availableFor);
+        availableForArray = Array.isArray(parsed) ? parsed : [];
+      } catch (error) {
+        console.error('Error parsing available_for:', error);
+        return '-';
+      }
+    } else if (Array.isArray(availableFor)) {
+      availableForArray = availableFor;
+    } else {
+      return '-';
+    }
+    
+    if (!Array.isArray(availableForArray) || availableForArray.length === 0) {
+      return '-';
+    }
+    
+    return availableForArray.map(role => {
+      switch (role) {
+        case 'user':
+          return 'User';
+        case 'seller':
+          return 'Seller';
+        case 'reseller':
+          return 'Reseller';
+        default:
+          return role;
+      }
+    }).join(', ');
   };
 
   if (loading) {
@@ -401,6 +453,57 @@ export default function PackageManagement() {
                 </select>
               </div>
 
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Tersedia Untuk</label>
+                <div className="space-y-2">
+                  <label className="flex items-center">
+                    <input
+                      type="checkbox"
+                      checked={Array.isArray(formData.available_for) && formData.available_for.includes('user')}
+                      onChange={(e) => {
+                        const currentAvailableFor = Array.isArray(formData.available_for) ? formData.available_for : [];
+                        const newAvailableFor = e.target.checked
+                          ? [...currentAvailableFor, 'user']
+                          : currentAvailableFor.filter(role => role !== 'user');
+                        setFormData({...formData, available_for: newAvailableFor});
+                      }}
+                      className="mr-2"
+                    />
+                    User
+                  </label>
+                  <label className="flex items-center">
+                    <input
+                      type="checkbox"
+                      checked={Array.isArray(formData.available_for) && formData.available_for.includes('seller')}
+                      onChange={(e) => {
+                        const currentAvailableFor = Array.isArray(formData.available_for) ? formData.available_for : [];
+                        const newAvailableFor = e.target.checked
+                          ? [...currentAvailableFor, 'seller']
+                          : currentAvailableFor.filter(role => role !== 'seller');
+                        setFormData({...formData, available_for: newAvailableFor});
+                      }}
+                      className="mr-2"
+                    />
+                    Seller
+                  </label>
+                  <label className="flex items-center">
+                    <input
+                      type="checkbox"
+                      checked={Array.isArray(formData.available_for) && formData.available_for.includes('reseller')}
+                      onChange={(e) => {
+                        const currentAvailableFor = Array.isArray(formData.available_for) ? formData.available_for : [];
+                        const newAvailableFor = e.target.checked
+                          ? [...currentAvailableFor, 'reseller']
+                          : currentAvailableFor.filter(role => role !== 'reseller');
+                        setFormData({...formData, available_for: newAvailableFor});
+                      }}
+                      className="mr-2"
+                    />
+                    Reseller
+                  </label>
+                </div>
+              </div>
+
               <div className="flex gap-2">
                 <button type="submit" className="bg-blue-500 text-white rounded px-3 py-2">
                   {editingPackage ? 'Perbarui Paket' : 'Tambah Paket'}
@@ -466,6 +569,9 @@ export default function PackageManagement() {
                   Stok
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Tersedia Untuk
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   Status
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
@@ -500,6 +606,9 @@ export default function PackageManagement() {
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                     {pkg.stock || '-'}
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                    {formatAvailableFor(pkg.available_for)}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
                     <span className={`px-2 py-1 text-xs rounded-full ${getStatusColor(pkg.status)}`}>
