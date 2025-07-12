@@ -186,7 +186,7 @@ export default function TopupBalance() {
                     <img 
                       src={paymentMethods.find(m => m.payment_method === paymentMethod)?.qr_code_url}
                       alt="QRIS QR Code"
-                      className="w-64 h-64 object-contain border border-gray-300 rounded-lg bg-white"
+                      className="w-full max-w-96 h-auto object-contain border border-gray-300 rounded-lg bg-white"
                       onError={(e) => {
                         e.target.style.display = 'none';
                         e.target.nextSibling.style.display = 'block';
