@@ -4,8 +4,8 @@ import axios from 'axios';
 import SearchBar from '../../common/SearchBar';
 import Pagination from '../../common/Pagination';
 
-export default function PackageManagement() {
-  const [packages, setPackages] = useState([]);
+export default function PPOBManagement() {
+  const [ppobPackages, setPPOBPackages] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showAddForm, setShowAddForm] = useState(false);
   const [editingPackage, setEditingPackage] = useState(null);
@@ -16,7 +16,7 @@ export default function PackageManagement() {
     price_user: '',
     price_seller: '',
     price_reseller: '',
-    type: 'kuota',
+    type: 'pulsa',
     provider: '',
     denomination: '',
     category: 'manual',
@@ -40,23 +40,23 @@ export default function PackageManagement() {
   });
 
   useEffect(() => {
-    fetchPackages();
+    fetchPPOBPackages();
   }, [pagination.currentPage, filters]);
 
-  const fetchPackages = async () => {
+  const fetchPPOBPackages = async () => {
     try {
       setLoading(true);
       const params = {
         page: pagination.currentPage,
         limit: pagination.itemsPerPage,
         ...filters,
-        service_type: 'data' // Filter for data packages only
+        service_type: 'ppob' // Filter for PPOB services only
       };
       const response = await axios.get('https://api-inventory.isavralabel.com/api/jmstore/admin/packages', { params });
-      setPackages(response.data.data);
+      setPPOBPackages(response.data.data);
       setPagination(response.data.pagination);
     } catch (error) {
-      console.error('Error fetching data packages:', error);
+      console.error('Error fetching PPOB packages:', error);
     } finally {
       setLoading(false);
     }
@@ -76,7 +76,7 @@ export default function PackageManagement() {
     try {
       const submitData = {
         ...formData,
-        service_type: 'data' // Mark as data service
+        service_type: 'ppob' // Mark as PPOB service
       };
       
       if (editingPackage) {
@@ -84,7 +84,7 @@ export default function PackageManagement() {
       } else {
         await axios.post('https://api-inventory.isavralabel.com/api/jmstore/admin/packages', submitData);
       }
-      fetchPackages();
+      fetchPPOBPackages();
       setShowAddForm(false);
       setEditingPackage(null);
       setFormData({
@@ -94,7 +94,7 @@ export default function PackageManagement() {
         price_user: '',
         price_seller: '',
         price_reseller: '',
-        type: 'kuota',
+        type: 'pulsa',
         provider: '',
         denomination: '',
         category: 'manual',
@@ -104,7 +104,7 @@ export default function PackageManagement() {
         available_for: ['user', 'seller', 'reseller']
       });
     } catch (error) {
-      console.error('Error saving data package:', error);
+      console.error('Error saving PPOB package:', error);
     }
   };
 
@@ -145,12 +145,12 @@ export default function PackageManagement() {
   };
 
   const handleDelete = async (id) => {
-    if (window.confirm('Apakah Anda yakin ingin menghapus paket data ini?')) {
+    if (window.confirm('Apakah Anda yakin ingin menghapus paket PPOB ini?')) {
       try {
         await axios.delete(`https://api-inventory.isavralabel.com/api/jmstore/admin/packages/${id}`);
-        fetchPackages();
+        fetchPPOBPackages();
       } catch (error) {
-        console.error('Error deleting data package:', error);
+        console.error('Error deleting PPOB package:', error);
       }
     }
   };
@@ -170,8 +170,18 @@ export default function PackageManagement() {
     switch (type) {
       case 'pulsa':
         return 'bg-blue-100 text-blue-800';
-      case 'kuota':
+      case 'voucher':
+        return 'bg-purple-100 text-purple-800';
+      case 'e-wallet':
         return 'bg-green-100 text-green-800';
+      case 'token':
+        return 'bg-orange-100 text-orange-800';
+      case 'pln':
+        return 'bg-yellow-100 text-yellow-800';
+      case 'pdam':
+        return 'bg-cyan-100 text-cyan-800';
+      case 'bpjs':
+        return 'bg-indigo-100 text-indigo-800';
       default:
         return 'bg-gray-100 text-gray-800';
     }
@@ -233,15 +243,15 @@ export default function PackageManagement() {
     <div>
       <div className="flex justify-between items-center mb-6">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Manajemen Paket Data</h1>
-          <p className="text-gray-600">Kelola paket data internet dan kuota</p>
+          <h1 className="text-2xl font-bold text-gray-900">Manajemen PPOB</h1>
+          <p className="text-gray-600">Kelola paket pulsa, voucher, e-wallet, token listrik, dan layanan PPOB lainnya</p>
         </div>
         <button
           onClick={() => setShowAddForm(true)}
           className="bg-blue-500 text-white rounded px-3 py-2"
         >
           <FiPlus className="mr-2 h-4 w-4" />
-          Tambah Paket
+          Tambah Paket PPOB
         </button>
       </div>
 
@@ -252,7 +262,7 @@ export default function PackageManagement() {
             value={filters.search}
             onChange={(value) => handleFilterChange('search', value)}
             onClear={() => handleFilterChange('search', '')}
-            placeholder="Cari paket..."
+            placeholder="Cari paket PPOB..."
             debounce={true}
             debounceDelay={500}
           />
@@ -263,9 +273,14 @@ export default function PackageManagement() {
             className="block w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-primary-500 focus:border-primary-500"
           >
             <option value="">Semua Jenis</option>
+            <option value="pulsa">Pulsa</option>
             <option value="kuota">Kuota</option>
-            <option value="data">Data</option>
-            <option value="internet">Internet</option>
+            <option value="voucher">Voucher</option>
+            <option value="e-wallet">E-Wallet</option>
+            <option value="token">Token Listrik</option>
+            <option value="pln">PLN</option>
+            <option value="pdam">PDAM</option>
+            <option value="bpjs">BPJS</option>
           </select>
 
           <select
@@ -279,6 +294,13 @@ export default function PackageManagement() {
             <option value="indosat">Indosat</option>
             <option value="tri">Tri</option>
             <option value="smartfren">Smartfren</option>
+            <option value="ovo">OVO</option>
+            <option value="dana">DANA</option>
+            <option value="gopay">GoPay</option>
+            <option value="shopeepay">ShopeePay</option>
+            <option value="linkaja">LinkAja</option>
+            <option value="pln">PLN</option>
+            <option value="pdam">PDAM</option>
           </select>
 
           <select
@@ -308,7 +330,7 @@ export default function PackageManagement() {
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
           <div className="bg-white rounded-lg p-6 w-full max-w-md max-h-[90vh] overflow-y-auto">
             <h3 className="text-lg font-medium mb-4">
-              {editingPackage ? 'Edit Paket Data' : 'Tambah Paket Data Baru'}
+              {editingPackage ? 'Edit Paket PPOB' : 'Tambah Paket PPOB Baru'}
             </h3>
             <form onSubmit={handleSubmit} className="space-y-4">
               <div>
@@ -323,16 +345,20 @@ export default function PackageManagement() {
               </div>
               
               <div>
-                <label className="block text-sm font-medium text-gray-700">Jenis</label>
+                <label className="block text-sm font-medium text-gray-700">Jenis Layanan</label>
                 <select
                   value={formData.type}
                   onChange={(e) => setFormData({...formData, type: e.target.value})}
                   className="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2"
                   required
                 >
-                  <option value="kuota">Kuota</option>
-                  <option value="data">Data</option>
-                  <option value="internet">Internet</option>
+                  <option value="pulsa">Pulsa</option>
+                  <option value="voucher">Voucher</option>
+                  <option value="e-wallet">E-Wallet</option>
+                  <option value="token">Token Listrik</option>
+                  <option value="pln">PLN</option>
+                  <option value="pdam">PDAM</option>
+                  <option value="bpjs">BPJS</option>
                 </select>
               </div>
 
@@ -350,6 +376,13 @@ export default function PackageManagement() {
                   <option value="indosat">Indosat</option>
                   <option value="tri">Tri</option>
                   <option value="smartfren">Smartfren</option>
+                  <option value="ovo">OVO</option>
+                  <option value="dana">DANA</option>
+                  <option value="gopay">GoPay</option>
+                  <option value="shopeepay">ShopeePay</option>
+                  <option value="linkaja">LinkAja</option>
+                  <option value="pln">PLN</option>
+                  <option value="pdam">PDAM</option>
                 </select>
               </div>
 
@@ -511,7 +544,7 @@ export default function PackageManagement() {
 
               <div className="flex gap-2">
                 <button type="submit" className="bg-blue-500 text-white rounded px-3 py-2">
-                  {editingPackage ? 'Perbarui Paket Data' : 'Tambah Paket Data'}
+                  {editingPackage ? 'Perbarui Paket PPOB' : 'Tambah Paket PPOB'}
                 </button>
                 <button 
                   type="button" 
@@ -525,7 +558,7 @@ export default function PackageManagement() {
                       price_user: '',
                       price_seller: '',
                       price_reseller: '',
-                      type: 'kuota',
+                      type: 'pulsa',
                       provider: '',
                       denomination: '',
                       category: 'manual',
@@ -545,10 +578,10 @@ export default function PackageManagement() {
         </div>
       )}
 
-      {/* Package List */}
+      {/* PPOB Package List */}
       <div className="bg-white shadow-sm rounded-lg overflow-hidden">
         <div className="px-6 py-4 border-b border-gray-200">
-          <h3 className="text-lg font-medium text-gray-900">Daftar Paket Data</h3>
+          <h3 className="text-lg font-medium text-gray-900">Daftar Paket PPOB</h3>
         </div>
         
         <div className="overflow-x-auto">
@@ -585,7 +618,7 @@ export default function PackageManagement() {
               </tr>
             </thead>
             <tbody className="bg-white divide-y divide-gray-200">
-              {packages.map((pkg) => (
+              {ppobPackages.map((pkg) => (
                 <tr key={pkg.id} className="hover:bg-gray-50">
                   <td className="px-6 py-4 whitespace-nowrap">
                     <div>
@@ -652,4 +685,4 @@ export default function PackageManagement() {
       </div>
     </div>
   );
-}
+} 

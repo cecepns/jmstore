@@ -166,7 +166,7 @@ export default function UserManagement() {
       case 'reseller':
         return 'Reseller';
       case 'seller':
-        return 'Penjual';
+        return 'Seller';
       case 'user':
         return 'Pengguna';
       default:
@@ -214,8 +214,8 @@ export default function UserManagement() {
             className="block w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-primary-500 focus:border-primary-500"
           >
             <option value="">Semua Peran</option>
-            <option value="user">Pengguna</option>
-            <option value="seller">Penjual</option>
+            <option value="user">User</option>
+            <option value="seller">Seller</option>
             <option value="reseller">Reseller</option>
             <option value="admin">Admin</option>
           </select>
@@ -268,8 +268,8 @@ export default function UserManagement() {
                   className="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2"
                   required
                 >
-                  <option value="user">Pengguna</option>
-                  <option value="seller">Penjual</option>
+                  <option value="user">User</option>
+                  <option value="seller">Seller</option>
                   <option value="reseller">Reseller</option>
                   <option value="admin">Admin</option>
                 </select>
@@ -358,8 +358,8 @@ export default function UserManagement() {
                   className="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2"
                   required
                 >
-                  <option value="user">Pengguna</option>
-                  <option value="seller">Penjual</option>
+                  <option value="user">User</option>
+                  <option value="seller">Seller</option>
                   <option value="reseller">Reseller</option>
                   <option value="admin">Admin</option>
                 </select>

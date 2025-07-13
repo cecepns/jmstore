@@ -8,6 +8,7 @@ import TopupAccountSettings from './admin/TopupAccountSettings';
 import WithdrawalManagement from './admin/WithdrawalManagement';
 import TransactionHistory from './admin/TransactionHistory';
 import PackageManagement from './admin/PackageManagement';
+import PPOBManagement from './admin/PPOBManagement';
 import UserManagement from './admin/UserManagement';
 import ProfitReport from './admin/ProfitReport';
 import ApiManagement from './admin/ApiManagement';
@@ -18,7 +19,8 @@ const adminMenuItems = [
   { name: 'Manajemen Topup', path: '/admin/topup', icon: 'credit-card' },
   { name: 'Pengaturan Akun Topup', path: '/admin/topup-settings', icon: 'settings' },
   // { name: 'Withdrawal Management', path: '/admin/withdrawals', icon: 'dollar-sign' },
-  { name: 'Manajemen Paket', path: '/admin/packages', icon: 'package' },
+  { name: 'Manajemen Paket Data', path: '/admin/packages', icon: 'package' },
+  { name: 'Manajemen PPOB', path: '/admin/ppob', icon: 'zap' },
   { name: 'Manajemen Pengguna', path: '/admin/users', icon: 'users' },
   { name: 'Riwayat Transaksi', path: '/admin/transactions', icon: 'list' },
   { name: 'Laporan Keuntungan', path: '/admin/reports', icon: 'bar-chart' },
@@ -48,6 +50,7 @@ export default function AdminDashboard() {
               <Route path="/topup-settings" element={<TopupAccountSettings />} />
               <Route path="/withdrawals" element={<WithdrawalManagement />} />
               <Route path="/packages" element={<PackageManagement />} />
+              <Route path="/ppob" element={<PPOBManagement />} />
               <Route path="/users" element={<UserManagement />} />
               <Route path="/transactions" element={<TransactionHistory />} />
               <Route path="/reports" element={<ProfitReport />} />

@@ -215,11 +215,11 @@ export default function BuyPackage() {
               
               <div className="mb-4">
                 <div className="text-2xl font-bold text-gray-900">
-                  Rp {pkg.price_user?.toLocaleString()}
+                  Rp {pkg.display_price?.toLocaleString()}
                 </div>
-                <div className="text-sm text-gray-500">
+                {/* <div className="text-sm text-gray-500">
                   Harga: Rp {pkg.price?.toLocaleString()}
-                </div>
+                </div> */}
               </div>
 
               <div className="flex items-center justify-between mb-4">
@@ -236,15 +236,15 @@ export default function BuyPackage() {
                   setSelectedPackage(pkg);
                   setShowPurchaseModal(true);
                 }}
-                disabled={pkg.status !== 'active' || pkg.price_user > balance || !phoneNumber.trim()}
+                disabled={pkg.status !== 'active' || pkg.display_price > balance || !phoneNumber.trim()}
                 className={`w-full py-2 px-4 rounded-md text-sm font-medium transition-colors ${
-                  pkg.status === 'active' && pkg.price_user <= balance && phoneNumber.trim()
+                  pkg.status === 'active' && pkg.display_price <= balance && phoneNumber.trim()
                     ? 'bg-primary-600 text-white hover:bg-primary-700'
                     : 'bg-gray-300 text-gray-500 cursor-not-allowed'
                 }`}
               >
                 {!phoneNumber.trim() ? 'Masukkan Nomor Telepon' : 
-                 pkg.price_user > balance ? 'Saldo Tidak Cukup' : 'Beli Sekarang'}
+                 pkg.display_price > balance ? 'Saldo Tidak Cukup' : 'Beli Sekarang'}
               </button>
             </div>
           </div>
@@ -282,7 +282,7 @@ export default function BuyPackage() {
                 <label className="block text-sm font-medium text-gray-700">Harga</label>
                 <div className="mt-1 p-3 bg-gray-50 rounded-md">
                   <div className="text-xl font-bold text-gray-900">
-                    Rp {selectedPackage.price_user?.toLocaleString()}
+                    Rp {selectedPackage.display_price?.toLocaleString()}
                   </div>
                 </div>
               </div>
@@ -291,7 +291,7 @@ export default function BuyPackage() {
                 <label className="block text-sm font-medium text-gray-700">Saldo Setelah Pembelian</label>
                 <div className="mt-1 p-3 bg-gray-50 rounded-md">
                   <div className="text-lg font-medium text-gray-900">
-                    Rp {(balance - selectedPackage.price_user).toLocaleString()}
+                    Rp {(balance - selectedPackage.display_price).toLocaleString()}
                   </div>
                 </div>
               </div>

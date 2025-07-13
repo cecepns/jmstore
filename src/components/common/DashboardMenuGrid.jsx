@@ -23,7 +23,7 @@ const getRoleLabel = (role) => {
     case "reseller":
       return "Reseller";
     case "seller":
-      return "Penjual";
+      return "Seller";
     case "user":
       return "Pengguna";
     default:
