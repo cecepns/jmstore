@@ -1,27 +1,27 @@
-import { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
-import { useAuth } from '../../contexts/AuthContext';
-import { FiUser, FiLock, FiEye, FiEyeOff } from 'react-icons/fi';
+import { useState } from "react";
+import { Link, useNavigate } from "react-router-dom";
+import { useAuth } from "../../contexts/AuthContext";
+import { FiUser, FiEye, FiEyeOff } from "react-icons/fi";
 
 export default function Login() {
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState('');
+  const [error, setError] = useState("");
   const { login } = useAuth();
   const navigate = useNavigate();
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
-    setError('');
+    setError("");
 
     try {
       const user = await login(email, password);
       navigate(`/${user.role}`);
     } catch (error) {
-      setError(error.response?.data?.message || 'Login gagal');
+      setError(error.response?.data?.message || "Login gagal");
     } finally {
       setLoading(false);
     }
@@ -38,8 +38,11 @@ export default function Login() {
             Masuk ke akun Anda
           </h2>
           <p className="mt-2 text-center text-sm text-gray-600">
-            Atau{' '}
-            <Link to="/register" className="font-medium text-primary-600 hover:text-primary-500">
+            Atau{" "}
+            <Link
+              to="/register"
+              className="font-medium text-primary-600 hover:text-primary-500"
+            >
               buat akun baru
             </Link>
           </p>
@@ -52,7 +55,10 @@ export default function Login() {
           )}
           <div className="space-y-4">
             <div>
-              <label htmlFor="email" className="block text-sm font-medium text-gray-700">
+              <label
+                htmlFor="email"
+                className="block text-sm font-medium text-gray-700"
+              >
                 Alamat Email
               </label>
               <div className="mt-1 relative">
@@ -70,14 +76,17 @@ export default function Login() {
               </div>
             </div>
             <div>
-              <label htmlFor="password" className="block text-sm font-medium text-gray-700">
+              <label
+                htmlFor="password"
+                className="block text-sm font-medium text-gray-700"
+              >
                 Kata Sandi
               </label>
               <div className="mt-1 relative">
                 <input
                   id="password"
                   name="password"
-                  type={showPassword ? 'text' : 'password'}
+                  type={showPassword ? "text" : "password"}
                   autoComplete="current-password"
                   required
                   value={password}
@@ -100,13 +109,22 @@ export default function Login() {
             </div>
           </div>
 
+          <p className="mt-1 text-center text-sm text-gray-600">
+            <Link
+              to="/reset-password"
+              className="font-medium text-primary-600 hover:text-primary-500"
+            >
+              Lupa password?
+            </Link>
+          </p>
+
           <div>
             <button
               type="submit"
               disabled={loading}
               className="group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-primary-600 hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              {loading ? 'Sedang masuk...' : 'Masuk'}
+              {loading ? "Sedang masuk..." : "Masuk"}
             </button>
           </div>
         </form>

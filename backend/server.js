@@ -154,6 +154,115 @@ app.get('/api/jmstore/auth/me', authenticateToken, async (req, res) => {
   }
 });
 
+// Password Reset Route
+app.post('/api/jmstore/auth/reset-password', async (req, res) => {
+  try {
+    const { phone } = req.body;
+    
+    if (!phone) {
+      return res.status(400).json({ message: 'Nomor HP diperlukan' });
+    }
+
+    // Format phone number to Indonesian format
+    let formattedPhone = phone;
+    if (phone.startsWith('0')) {
+      formattedPhone = '62' + phone.substring(1);
+    } else if (!phone.startsWith('62')) {
+      formattedPhone = '62' + phone;
+    }
+
+    // Find user by phone number
+    const [users] = await dbJmStore.execute(
+      'SELECT id, name, email, phone FROM users WHERE phone = ? OR phone = ?',
+      [phone, formattedPhone]
+    );
+    
+    if (users.length === 0) {
+      return res.status(404).json({ message: 'Nomor HP tidak ditemukan dalam sistem' });
+    }
+
+    const user = users[0];
+    
+    // Generate new random password
+    const newPassword = Math.random().toString(36).slice(-8) + Math.random().toString(36).toUpperCase().slice(-4) + Math.floor(Math.random() * 1000);
+    
+    // Hash the new password
+    const hashedPassword = await bcrypt.hash(newPassword, 10);
+    
+    // Update user password
+    await dbJmStore.execute(
+      'UPDATE users SET password = ? WHERE id = ?',
+      [hashedPassword, user.id]
+    );
+
+    // Get WhatsApp gateway settings
+    const [apiSettings] = await dbJmStore.execute(
+      'SELECT endpoint_url, api_key, api_secret FROM api_settings WHERE provider = "whatsapp_gateway" AND is_active = TRUE LIMIT 1'
+    );
+    
+    if (apiSettings.length === 0) {
+      return res.status(500).json({ message: 'WhatsApp gateway tidak tersedia. Silakan hubungi admin.' });
+    }
+    
+    const whatsappSettings = apiSettings[0];
+    
+    // Create WhatsApp message
+    const message = `🔐 *RESET PASSWORD - JM Store*
+
+Halo ${user.name || 'User'},
+
+Password baru Anda telah dibuat:
+
+📱 *Username:* ${user.email}
+🔑 *Password Baru:* ${newPassword}
+
+⚠️ *PENTING:*
+• Segera login dan ubah password Anda
+• Jangan bagikan password ini kepada siapapun
+• Password ini hanya berlaku sekali
+
+🔗 Login di: https://jmstore.vercel.app/login
+
+Terima kasih,
+Tim JM Store`;
+    
+    // Prepare WhatsApp API payload
+    const whatsappPayload = {
+      token: whatsappSettings.api_key,
+      instance_id: whatsappSettings.api_secret,
+      jid: `${formattedPhone}@s.whatsapp.net`,
+      msg: message
+    };
+    
+    console.log('Sending password reset WhatsApp:', {
+      url: whatsappSettings.endpoint_url,
+      payload: whatsappPayload
+    });
+    
+    // Send WhatsApp notification
+    const whatsappResponse = await axios.get(
+      whatsappSettings.endpoint_url,
+      {
+        params: whatsappPayload,
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        timeout: 10000 // 10 seconds timeout
+      }
+    );
+    
+    console.log('Password reset WhatsApp sent:', whatsappResponse.data);
+
+    res.json({ 
+      message: 'Password baru telah dikirim ke WhatsApp Anda',
+      success: true
+    });
+  } catch (error) {
+    console.error('Password reset error:', error);
+    res.status(500).json({ message: 'Gagal mengirim password baru. Silakan coba lagi.' });
+  }
+});
+
 // User Profile Routes
 app.put('/api/jmstore/users/profile', authenticateToken, async (req, res) => {
   try {
@@ -330,7 +439,10 @@ app.get('/api/jmstore/packages', async (req, res) => {
       FROM packages p 
       WHERE p.status = "active" 
         AND JSON_CONTAINS(p.available_for, ?)
-        AND (p.stock IS NULL OR p.stock > 0)
+        AND (
+          (p.category = 'api')
+          OR (p.category != 'api' AND (p.stock IS NULL OR p.stock > 0))
+        )
       ORDER BY p.provider, p.type, p.price`,
       [role, role, role, JSON.stringify(role)]
     );
@@ -355,7 +467,7 @@ app.get('/api/jmstore/user/packages', authenticateToken, async (req, res) => {
     const { search = '', type = '', provider = '' } = req.query;
     const userRole = req.user.role;
     
-    let whereClause = 'WHERE p.status = "active" AND JSON_CONTAINS(p.available_for, ?) AND (p.stock IS NULL OR p.stock > 0)';
+    let whereClause = 'WHERE p.status = "active" AND JSON_CONTAINS(p.available_for, ?) AND ((p.category = "api") OR (p.category != "api" AND (p.stock IS NULL OR p.stock > 0)))';
     const params = [JSON.stringify(userRole)];
 
     if (search) {

@@ -1,7 +1,7 @@
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
-import { useState, useEffect } from 'react';
 import Login from './components/auth/Login';
 import Register from './components/auth/Register';
+import ResetPassword from './components/auth/ResetPassword';
 import AdminDashboard from './components/dashboard/AdminDashboard';
 import UserDashboard from './components/dashboard/UserDashboard';
 import ResellerDashboard from './components/dashboard/ResellerDashboard';
@@ -18,6 +18,7 @@ function App() {
           <Routes>
             <Route path="/login" element={<Login />} />
             <Route path="/register" element={<Register />} />
+            <Route path="/reset-password" element={<ResetPassword />} />
             <Route path="/admin/*" element={<ProtectedRoute role="admin"><AdminDashboard /></ProtectedRoute>} />
             <Route path="/reseller/*" element={<ProtectedRoute role="reseller"><ResellerDashboard /></ProtectedRoute>} />
             <Route path="/seller/*" element={<ProtectedRoute role="seller"><SellerDashboard /></ProtectedRoute>} />

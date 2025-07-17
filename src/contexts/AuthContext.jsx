@@ -64,6 +64,15 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
+  const resetPassword = async (phone) => {
+    try {
+      const response = await axios.post('https://api-inventory.isavralabel.com/api/jmstore/auth/reset-password', { phone });
+      return response.data;
+    } catch (error) {
+      throw error;
+    }
+  };
+
   const logout = () => {
     localStorage.removeItem('token');
     delete axios.defaults.headers.common['Authorization'];
@@ -74,6 +83,7 @@ export const AuthProvider = ({ children }) => {
     user,
     login,
     register,
+    resetPassword,
     logout,
     loading
   };
