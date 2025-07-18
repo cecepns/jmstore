@@ -232,27 +232,7 @@ export default function BuyPackage() {
     }
   };
 
-  const getStatusColor = (status) => {
-    switch (status) {
-      case 'active':
-        return 'bg-green-100 text-green-800';
-      case 'inactive':
-        return 'bg-red-100 text-red-800';
-      default:
-        return 'bg-gray-100 text-gray-800';
-    }
-  };
 
-  const getTypeColor = (type) => {
-    switch (type) {
-      case 'pulsa':
-        return 'bg-blue-100 text-blue-800';
-      case 'kuota':
-        return 'bg-green-100 text-green-800';
-      default:
-        return 'bg-gray-100 text-gray-800';
-    }
-  };
 
   const formatStockMessage = (message) => {
     if (!message) return [];
@@ -336,7 +316,7 @@ export default function BuyPackage() {
       </div>
 
       {/* Phone Number Input */}
-      <div className="bg-white p-6 rounded-lg shadow-sm mb-6">
+      <div className="bg-white sticky top-20 p-6 rounded-lg shadow-sm mb-6">
         <div className="max-w-md">
           <label className="block text-sm font-medium text-gray-700 mb-2">
             Nomor Telepon
@@ -389,90 +369,50 @@ export default function BuyPackage() {
         </div>
       </div>
 
-      {/* Packages Table */}
-      <div className="bg-white rounded-lg shadow-sm overflow-hidden">
-        <div className="overflow-x-auto">
-          <table className="min-w-full divide-y divide-gray-200">
-            <thead className="bg-gray-50">
-              <tr>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Paket
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Jenis
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Provider
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Harga
-                </th>
-                {/* <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Status
-                </th> */}
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Aksi
-                </th>
-              </tr>
-            </thead>
-            <tbody className="bg-white divide-y divide-gray-200">
-              {packages.map((pkg) => (
-                <tr key={pkg.id} className="hover:bg-gray-50">
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <div>
-                      <div className="text-sm font-medium text-gray-900">{pkg.name}</div>
-                      <div className="text-sm text-gray-500">{pkg.denomination}</div>
-                    </div>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <span className={`px-2 py-1 text-xs rounded-full ${getTypeColor(pkg.type)}`}>
-                      {pkg.type}
-                    </span>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                    {pkg.provider}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="text-sm font-medium text-gray-900">
-                      Rp {pkg.display_price?.toLocaleString()}
-                    </div>
-                  </td>
-                  {/* <td className="px-6 py-4 whitespace-nowrap">
-                    <span className={`px-2 py-1 text-xs rounded-full ${getStatusColor(pkg.status)}`}>
-                      {pkg.status === 'active' ? 'Tersedia' : 'Tidak Tersedia'}
-                    </span>
-                  </td> */}
-                  <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                    <button
-                      onClick={() => {
-                        setSelectedPackage(pkg);
-                        setShowPurchaseModal(true);
-                      }}
-                      disabled={pkg.status !== 'active' || pkg.display_price > balance || !phoneNumber.trim()}
-                      className={`px-3 py-1 rounded-md text-xs font-medium transition-colors ${
-                        pkg.status === 'active' && pkg.display_price <= balance && phoneNumber.trim()
-                          ? 'bg-primary-600 text-white hover:bg-primary-700'
-                          : 'bg-gray-300 text-gray-500 cursor-not-allowed'
-                      }`}
-                    >
-                      {!phoneNumber.trim() ? 'Masukkan Nomor Telepon' : 
-                       pkg.display_price > balance ? 'Saldo Tidak Cukup' : 'Beli'}
-                    </button>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+      {/* Packages Cards */}
+      <div className="bg-white rounded-lg shadow-sm p-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          {packages.filter(pkg => pkg.denomination !== 'TESAKRAB').map((pkg) => (
+            <div key={pkg.id} className="border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow">
+              <div className="flex items-center justify-between">
+                <div className="flex-1">
+                  <h3 className="text-sm font-medium text-gray-900 mb-1">{pkg.name}</h3>
+                  <p className="text-lg font-bold text-gray-900">
+                    Rp {pkg.display_price?.toLocaleString()}
+                  </p>
+                </div>
+                <div className="ml-4">
+                  <button
+                    onClick={() => {
+                      setSelectedPackage(pkg);
+                      setShowPurchaseModal(true);
+                    }}
+                    disabled={pkg.status !== 'active' || pkg.display_price > balance || !phoneNumber.trim()}
+                    className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
+                      pkg.status === 'active' && pkg.display_price <= balance && phoneNumber.trim()
+                        ? 'bg-primary-600 text-white hover:bg-primary-700'
+                        : 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                    }`}
+                  >
+                    {!phoneNumber.trim() ? 'Input No Telepon' : 
+                     pkg.display_price > balance ? 'Saldo Tidak Cukup' : 'Beli'}
+                  </button>
+                </div>
+              </div>
+            </div>
+          ))}
         </div>
         
         {/* Pagination */}
-        <Pagination
-          currentPage={pagination.currentPage}
-          totalPages={pagination.totalPages}
-          totalItems={pagination.totalItems}
-          itemsPerPage={pagination.itemsPerPage}
-          onPageChange={handlePageChange}
-        />
+        <div className="mt-6">
+          <Pagination
+            currentPage={pagination.currentPage}
+            totalPages={pagination.totalPages}
+            totalItems={pagination.totalItems}
+            itemsPerPage={pagination.itemsPerPage}
+            onPageChange={handlePageChange}
+          />
+        </div>
       </div>
 
       {/* Stock Modal */}
@@ -546,7 +486,7 @@ export default function BuyPackage() {
                   <div className="font-medium">{selectedPackage.name}</div>
                   <div className="text-sm text-gray-600">{selectedPackage.denomination}</div>
                   {selectedPackage.description && (
-                    <div className="text-sm text-gray-500 mt-2">
+                    <div className="text-sm text-gray-500 mt-2 whitespace-pre-line">
                       {selectedPackage.description}
                     </div>
                   )}
