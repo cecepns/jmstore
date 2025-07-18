@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import axios from 'axios';
 import SearchBar from '../../common/SearchBar';
+import Pagination from '../../common/Pagination';
 import useToast from '../../../hooks/useToast';
 
 // Area data
@@ -88,9 +89,12 @@ export default function BuyPackage() {
   const [showAreaModal, setShowAreaModal] = useState(false);
   const [areaSearch, setAreaSearch] = useState('');
   const [filteredAreaData, setFilteredAreaData] = useState(areaData);
-  const [showPackageCheckModal, setShowPackageCheckModal] = useState(false);
-  const [packageCheckLoading, setPackageCheckLoading] = useState(false);
-  const [packageCheckData, setPackageCheckData] = useState(null);
+  const [pagination, setPagination] = useState({
+    currentPage: 1,
+    totalPages: 1,
+    totalItems: 0,
+    itemsPerPage: 20
+  });
   const [filters, setFilters] = useState({
     search: '',
     type: '',
@@ -102,7 +106,7 @@ export default function BuyPackage() {
   useEffect(() => {
     fetchPackages();
     fetchBalance();
-  }, [filters]);
+  }, [filters, pagination.currentPage]);
 
   // Filter area data based on search
   useEffect(() => {
@@ -120,9 +124,26 @@ export default function BuyPackage() {
 
   const fetchPackages = async () => {
     try {
-      const params = { ...filters };
+      const params = { 
+        ...filters,
+        page: pagination.currentPage,
+        limit: pagination.itemsPerPage
+      };
       const response = await axios.get('https://api-inventory.isavralabel.com/api/jmstore/user/packages', { params });
-      setPackages(response.data);
+      setPackages(response.data.data || response.data);
+      
+      // Handle pagination data if available
+      if (response.data.pagination) {
+        setPagination(response.data.pagination);
+      } else {
+        // If no pagination data from API, create basic pagination
+        const totalItems = response.data.length || 0;
+        setPagination(prev => ({
+          ...prev,
+          totalItems,
+          totalPages: Math.ceil(totalItems / pagination.itemsPerPage)
+        }));
+      }
     } catch (error) {
       console.error('Error fetching packages:', error);
       showError('Gagal memuat paket');
@@ -155,43 +176,18 @@ export default function BuyPackage() {
     }
   };
 
-  const checkPackage = async () => {
-    if (!phoneNumber.trim()) {
-      showWarning('Masukkan nomor telepon terlebih dahulu');
-      return;
-    }
 
-    setPackageCheckLoading(true);
-    try {
-      const res = await fetch(`https://apigw.kmsp-store.com/sidompul/v4/cek_kuota?msisdn=${phoneNumber}&isJSON=true`, {
-        method: 'GET',
-        headers: {
-          'Accept': 'application/json, text/javascript, */*; q=0.01',
-          'Accept-Encoding': 'gzip, deflate, br, zstd',
-          'Accept-Language': 'id,en;q=0.9',
-          'Access-Code': 'NYQLFxYsnOy+/zwnNWmNTUN5',
-          'Authorization': 'Basic c2lkb21wdWxhcGk6YXBpZ3drbXNw',
-          'Cache-Control': 'no-cache'
-        }
-      });
-
-      const response = await res.json();
-      
-      setPackageCheckData(response);
-      setShowPackageCheckModal(true);
-    } catch (error) {
-      console.error('Error checking package:', error);
-      // showError('Gagal mengecek paket. Silakan coba lagi.');
-    } finally {
-      setPackageCheckLoading(false);
-    }
-  };
 
   const handleFilterChange = (key, value) => {
     setFilters(prev => ({
       ...prev,
       [key]: value
     }));
+    setPagination(prev => ({ ...prev, currentPage: 1 }));
+  };
+
+  const handlePageChange = (page) => {
+    setPagination(prev => ({ ...prev, currentPage: page }));
   };
 
   const handlePurchase = async () => {
@@ -393,60 +389,90 @@ export default function BuyPackage() {
         </div>
       </div>
 
-      {/* Packages Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-        {packages.map((pkg) => (
-          <div key={pkg.id} className="bg-white rounded-lg shadow-sm border border-gray-200 hover:shadow-md transition-shadow">
-            <div className="p-6">
-              <div className="flex items-center justify-between mb-4">
-                <div>
-                  <h3 className="text-lg font-semibold text-gray-900">{pkg.name}</h3>
-                  <p className="text-sm text-gray-600">{pkg.denomination}</p>
-                </div>
-                <div className="flex flex-col items-end">
-                  <span className={`px-2 py-1 text-xs rounded-full ${getTypeColor(pkg.type)}`}>
-                    {pkg.type}
-                  </span>
-                  <span className="text-xs text-gray-500 mt-1">{pkg.provider}</span>
-                </div>
-              </div>
-              
-              <div className="mb-4">
-                <div className="text-2xl font-bold text-gray-900">
-                  Rp {pkg.display_price?.toLocaleString()}
-                </div>
-                {/* <div className="text-sm text-gray-500">
-                  Harga: Rp {pkg.price?.toLocaleString()}
-                </div> */}
-              </div>
-
-              <div className="flex items-center justify-between mb-4">
-                <span className={`px-2 py-1 text-xs rounded-full ${getStatusColor(pkg.status)}`}>
-                  {pkg.status === 'active' ? 'Tersedia' : 'Tidak Tersedia'}
-                </span>
-                {/* <span className="text-xs text-gray-500">
-                  Stok: {pkg.stock || '-'}
-                </span> */}
-              </div>
-
-              <button
-                onClick={() => {
-                  setSelectedPackage(pkg);
-                  setShowPurchaseModal(true);
-                }}
-                disabled={pkg.status !== 'active' || pkg.display_price > balance || !phoneNumber.trim()}
-                className={`w-full py-2 px-4 rounded-md text-sm font-medium transition-colors ${
-                  pkg.status === 'active' && pkg.display_price <= balance && phoneNumber.trim()
-                    ? 'bg-primary-600 text-white hover:bg-primary-700'
-                    : 'bg-gray-300 text-gray-500 cursor-not-allowed'
-                }`}
-              >
-                {!phoneNumber.trim() ? 'Masukkan Nomor Telepon' : 
-                 pkg.display_price > balance ? 'Saldo Tidak Cukup' : 'Beli Sekarang'}
-              </button>
-            </div>
-          </div>
-        ))}
+      {/* Packages Table */}
+      <div className="bg-white rounded-lg shadow-sm overflow-hidden">
+        <div className="overflow-x-auto">
+          <table className="min-w-full divide-y divide-gray-200">
+            <thead className="bg-gray-50">
+              <tr>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Paket
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Jenis
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Provider
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Harga
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Status
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Aksi
+                </th>
+              </tr>
+            </thead>
+            <tbody className="bg-white divide-y divide-gray-200">
+              {packages.map((pkg) => (
+                <tr key={pkg.id} className="hover:bg-gray-50">
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    <div>
+                      <div className="text-sm font-medium text-gray-900">{pkg.name}</div>
+                      <div className="text-sm text-gray-500">{pkg.denomination}</div>
+                    </div>
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    <span className={`px-2 py-1 text-xs rounded-full ${getTypeColor(pkg.type)}`}>
+                      {pkg.type}
+                    </span>
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                    {pkg.provider}
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    <div className="text-sm font-medium text-gray-900">
+                      Rp {pkg.display_price?.toLocaleString()}
+                    </div>
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    <span className={`px-2 py-1 text-xs rounded-full ${getStatusColor(pkg.status)}`}>
+                      {pkg.status === 'active' ? 'Tersedia' : 'Tidak Tersedia'}
+                    </span>
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                    <button
+                      onClick={() => {
+                        setSelectedPackage(pkg);
+                        setShowPurchaseModal(true);
+                      }}
+                      disabled={pkg.status !== 'active' || pkg.display_price > balance || !phoneNumber.trim()}
+                      className={`px-3 py-1 rounded-md text-xs font-medium transition-colors ${
+                        pkg.status === 'active' && pkg.display_price <= balance && phoneNumber.trim()
+                          ? 'bg-primary-600 text-white hover:bg-primary-700'
+                          : 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                      }`}
+                    >
+                      {!phoneNumber.trim() ? 'Masukkan Nomor Telepon' : 
+                       pkg.display_price > balance ? 'Saldo Tidak Cukup' : 'Beli'}
+                    </button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+        
+        {/* Pagination */}
+        <Pagination
+          currentPage={pagination.currentPage}
+          totalPages={pagination.totalPages}
+          totalItems={pagination.totalItems}
+          itemsPerPage={pagination.itemsPerPage}
+          onPageChange={handlePageChange}
+        />
       </div>
 
       {/* Stock Modal */}
@@ -663,75 +689,6 @@ export default function BuyPackage() {
                 onClick={() => {
                   setShowAreaModal(false);
                   setAreaSearch('');
-                }}
-                className="bg-gray-300 text-gray-700 py-2 px-4 rounded-md hover:bg-gray-400"
-              >
-                Tutup
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Package Check Modal */}
-      {showPackageCheckModal && packageCheckData && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-          <div className="bg-white rounded-lg p-6 w-full max-w-2xl max-h-[80vh] overflow-hidden">
-            <div className="flex items-center justify-between mb-4">
-              <h3 className="text-lg font-medium text-gray-900">Informasi Paket</h3>
-              <button
-                onClick={() => {
-                  setShowPackageCheckModal(false);
-                  setPackageCheckData(null);
-                }}
-                className="text-gray-400 hover:text-gray-600"
-              >
-                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                </svg>
-              </button>
-            </div>
-
-            <div className="overflow-y-auto max-h-[60vh]">
-              <div className="space-y-4">
-                <div className="bg-gray-50 p-4 rounded-lg">
-                  <div className="grid grid-cols-2 gap-4 text-sm">
-                    <div>
-                      <span className="font-medium text-gray-700">Nomor:</span>
-                      <p className="text-gray-900">{packageCheckData.data?.msisdn || phoneNumber}</p>
-                    </div>
-                    <div>
-                      <span className="font-medium text-gray-700">Status:</span>
-                      <p className="text-gray-900">{packageCheckData.status ? 'Berhasil' : 'Gagal'}</p>
-                    </div>
-                    <div>
-                      <span className="font-medium text-gray-700">Status Code:</span>
-                      <p className="text-gray-900">{packageCheckData.statusCode}</p>
-                    </div>
-                    <div>
-                      <span className="font-medium text-gray-700">Message:</span>
-                      <p className="text-gray-900">{packageCheckData.message}</p>
-                    </div>
-                  </div>
-                </div>
-
-                <div className="bg-white border border-gray-200 rounded-lg p-4">
-                  <h4 className="font-medium text-gray-900 mb-3">Detail Paket:</h4>
-                  <div 
-                    className="text-sm text-gray-700 whitespace-pre-line"
-                    dangerouslySetInnerHTML={{ 
-                      __html: packageCheckData.data?.hasil?.replace(/\n/g, '<br>') || 'Tidak ada informasi paket' 
-                    }}
-                  />
-                </div>
-              </div>
-            </div>
-
-            <div className="mt-6 flex justify-end">
-              <button
-                onClick={() => {
-                  setShowPackageCheckModal(false);
-                  setPackageCheckData(null);
                 }}
                 className="bg-gray-300 text-gray-700 py-2 px-4 rounded-md hover:bg-gray-400"
               >
