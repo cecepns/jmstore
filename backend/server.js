@@ -464,8 +464,9 @@ app.get('/api/jmstore/packages', async (req, res) => {
 // Add user-specific packages endpoint
 app.get('/api/jmstore/user/packages', authenticateToken, async (req, res) => {
   try {
-    const { search = '', type = '', provider = '' } = req.query;
+    const { search = '', type = '', provider = '', page = 1, limit = 20 } = req.query;
     const userRole = req.user.role;
+    const offset = (page - 1) * limit;
     
     let whereClause = 'WHERE p.status = "active" AND JSON_CONTAINS(p.available_for, ?) AND ((p.category = "api") OR (p.category != "api" AND (p.stock IS NULL OR p.stock > 0)))';
     const params = [JSON.stringify(userRole)];
@@ -485,7 +486,13 @@ app.get('/api/jmstore/user/packages', authenticateToken, async (req, res) => {
       params.push(provider);
     }
 
-    // Get packages with role-based pricing
+    // Get total count
+    const [countResult] = await dbJmStore.execute(
+      `SELECT COUNT(*) as total FROM packages p ${whereClause}`,
+      params
+    );
+
+    // Get packages with role-based pricing and pagination
     const [packages] = await dbJmStore.execute(
       `SELECT 
         p.*,
@@ -497,8 +504,9 @@ app.get('/api/jmstore/user/packages', authenticateToken, async (req, res) => {
         END as display_price
       FROM packages p 
       ${whereClause}
-      ORDER BY p.provider, p.type, p.price`,
-      [userRole, userRole, userRole, ...params]
+      ORDER BY p.provider, p.type, p.price
+      LIMIT ? OFFSET ?`,
+      [userRole, userRole, userRole, ...params, parseInt(limit), offset]
     );
 
     // Convert display_price to number for all packages
@@ -508,7 +516,15 @@ app.get('/api/jmstore/user/packages', authenticateToken, async (req, res) => {
       price: parseFloat(pkg.price) || 0
     }));
 
-    res.json(packagesWithNumericPrices);
+    res.json({
+      data: packagesWithNumericPrices,
+      pagination: {
+        currentPage: parseInt(page),
+        totalPages: Math.ceil(countResult[0].total / limit),
+        totalItems: countResult[0].total,
+        itemsPerPage: parseInt(limit)
+      }
+    });
   } catch (error) {
     console.error('Get user packages error:', error);
     res.status(500).json({ message: 'Failed to get packages' });

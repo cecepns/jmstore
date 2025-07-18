@@ -93,7 +93,7 @@ export default function BuyPackage() {
     currentPage: 1,
     totalPages: 1,
     totalItems: 0,
-    itemsPerPage: 20
+    itemsPerPage: 50
   });
   const [filters, setFilters] = useState({
     search: '',
